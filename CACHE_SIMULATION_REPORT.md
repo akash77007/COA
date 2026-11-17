@@ -39,6 +39,8 @@ The simulation feeds an identical sequence of memory requests into all three con
 2. Whether the block is already resident (**HIT**) or must be retrieved from main memory (**MISS**).
 3. Which block, if any, must be evicted under the **Least Recently Used (LRU)** policy.
 
+![Cache Configuration Diagram](docs/screenshots/architecture.png)
+
 ```
        Processor Request (Block ID)
                    │
@@ -91,6 +93,8 @@ To understand how each architecture handles conflicting requests, consider what 
 
 Prior to Cycle 3, the access sequence has already loaded **Block 0** (Cycle 1) and **Block 4** (Cycle 2):
 
+![Worked Example Block 8 Arrival](docs/screenshots/shot_check1.png)
+
 ### Cache State Prior to Cycle 3:
 - **Direct-Mapped:** Block 0 was initially loaded into $L0$. Block 4 then arrived, computed $4 \pmod 4 = 0$, and evicted Block 0 from $L0$. State: `[L0: 4, L1: -, L2: -, L3: -]`.
 - **2-Way Set-Associative:** Block 0 was placed in Set 0, Way 0 ($L0$). Block 4 arrived, computed $4 \pmod 2 = 0$, and occupied Set 0, Way 1 ($L1$). State: `Set 0: [L0: 0, L1: 4]`, with Block 0 as the Least Recently Used block.
@@ -120,6 +124,9 @@ Prior to Cycle 3, the access sequence has already loaded **Block 0** (Cycle 1) a
 Running the simulator on the required sequence `0, 4, 8, 0, 4, 12` produces the following traces:
 
 ### 6.1 Direct-Mapped Trace ($Line = Block \pmod 4$)
+
+![Direct-Mapped Cache Trace](docs/screenshots/shot_direct.png)
+
 | Step | Block | Tag | Set | Line | Result | Evicted | Cache Lines ($L0, L1, L2, L3$) |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
 | 1 | 0 | 0 | 0 | L0 | **MISS** | — | `[0, -, -, -]` |
@@ -134,6 +141,9 @@ Running the simulator on the required sequence `0, 4, 8, 0, 4, 12` produces the 
 ---
 
 ### 6.2 2-Way Set-Associative Trace ($Set = Block \pmod 2$, LRU)
+
+![2-Way Set-Associative Cache Trace](docs/screenshots/shot_setassoc.png)
+
 | Step | Block | Tag | Set | Line | Result | Evicted | Cache Lines ($L0, L1, L2, L3$) |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
 | 1 | 0 | 0 | 0 | L0 | **MISS** | — | `[0, -, -, -]` |
@@ -148,6 +158,9 @@ Running the simulator on the required sequence `0, 4, 8, 0, 4, 12` produces the 
 ---
 
 ### 6.3 Fully Associative Trace (Global Search, LRU)
+
+![Fully Associative Cache Trace](docs/screenshots/shot_full.png)
+
 | Step | Block | Tag | Set | Line | Result | Evicted | Cache Lines ($L0, L1, L2, L3$) |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
 | 1 | 0 | 0 | 0 | L0 | **MISS** | — | `[0, -, -, -]` |
@@ -164,6 +177,8 @@ Running the simulator on the required sequence `0, 4, 8, 0, 4, 12` produces the 
 ## 7. Performance Evaluation
 
 ### 7.1 Quantitative Comparison Matrix
+
+![Comparative Performance Matrix](docs/screenshots/shot_summary.png)
 
 | Architecture | Hits | Misses | Hit Rate | Miss Rate | Lines Occupied | Space Utilisation |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -235,6 +250,8 @@ To verify how the three architectures behave under different access patterns, th
 
 ## 10. How to Run the Simulator
 
+![Simulator Execution Startup](docs/screenshots/shot_build.png)
+
 ```bash
 # Run main sequence [0, 4, 8, 0, 4, 12]:
 python cache_simulator.py
@@ -245,3 +262,5 @@ python cache_simulator.py --all
 # Run any custom block sequence:
 python cache_simulator.py "2, 6, 10, 14, 2, 6"
 ```
+
+The raw terminal execution log can be viewed at [docs/terminal_output.log](docs/terminal_output.log).

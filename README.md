@@ -19,6 +19,23 @@ Evaluated under the primary benchmark access sequence `[0, 4, 8, 0, 4, 12]` as w
 - **Test 2:** `2, 6, 10, 14, 2, 6` (Multiple blocks competing for the same set)
 - **Test 3:** `0, 1, 2, 3, 4, 5, 0, 1` (Cache flushing and capacity limit analysis)
 
+📄 **[View the Complete Technical Report (CACHE_SIMULATION_REPORT.md)](CACHE_SIMULATION_REPORT.md)**  
+📜 **[View Raw Execution Log (docs/terminal_output.log)](docs/terminal_output.log)**
+
+---
+
+## 📷 Screenshots Gallery
+
+| Screen | Description | Preview |
+| :--- | :--- | :--- |
+| **Hardware Setup** | Cache Configuration Diagram | [docs/screenshots/architecture.png](docs/screenshots/architecture.png) |
+| **Startup Check** | Environment & Initialization Trace | [docs/screenshots/shot_build.png](docs/screenshots/shot_build.png) |
+| **Worked Example** | Cycle 3 Arrival of Block 8 | [docs/screenshots/shot_check1.png](docs/screenshots/shot_check1.png) |
+| **Direct-Mapped** | Trace Table & Conflict Misses | [docs/screenshots/shot_direct.png](docs/screenshots/shot_direct.png) |
+| **Set-Associative** | 2-Way Set-Associative Trace Table | [docs/screenshots/shot_setassoc.png](docs/screenshots/shot_setassoc.png) |
+| **Fully Associative**| Fully Associative Trace & 2 Hits | [docs/screenshots/shot_full.png](docs/screenshots/shot_full.png) |
+| **Summary Matrix** | Comparative Performance Matrix | [docs/screenshots/shot_summary.png](docs/screenshots/shot_summary.png) |
+
 ---
 
 ## 📁 Repository Directory Structure
@@ -28,7 +45,7 @@ coa_akash/
 ├── .vscode/
 │   └── tasks.json                     # VS Code tasks for automated execution
 ├── docs/
-│   ├── screenshots/                   # Freshly generated terminal trace screenshots
+│   ├── screenshots/                   # Actual hardware terminal trace screenshots
 │   │   ├── architecture.png           # Cache configuration & experimental setup
 │   │   ├── shot_build.png             # Simulator initialization & configuration
 │   │   ├── shot_check1.png            # Step-by-step analysis of Block 8 arrival
@@ -62,7 +79,7 @@ python cache_simulator.py "2, 6, 10, 14, 2, 6"
 
 ---
 
-## 📊 Summary of Main Benchmark Results (`0, 4, 8, 0, 4, 12`)
+## 📊 Summary of Benchmark Results (`0, 4, 8, 0, 4, 12`)
 
 | Mapping Architecture | Hits | Misses | Hit Ratio | Miss Ratio | Cache Occupancy |
 | :--- | :---: | :---: | :---: | :---: | :---: |
