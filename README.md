@@ -9,36 +9,39 @@
 ---
 
 ## 📌 Project Overview
-This project simulates and benchmarks the three canonical cache mapping architectures:
+This project presents an empirical and architectural simulation comparing the three primary cache mapping paradigms:
 1. **Direct-Mapped Cache** (1-Way Associative)
 2. **2-Way Set-Associative Cache** (2-Way Associative with LRU Replacement)
 3. **Fully Associative Cache** (4-Way Associative with Global LRU Replacement)
 
-Demonstrating explicit Tag and Set index address decomposition, cycle-by-cycle line state transitions, hit/miss detection, and conflict thrashing analysis for memory access sequence `[0, 4, 8, 0, 4, 12]`.
+Evaluated under the primary benchmark access sequence `[0, 4, 8, 0, 4, 12]` as well as three independent stress tests:
+- **Test 1:** `0, 1, 0, 1, 0, 1` (Repeated access to two non-conflicting blocks)
+- **Test 2:** `2, 6, 10, 14, 2, 6` (Multiple blocks competing for the same set)
+- **Test 3:** `0, 1, 2, 3, 4, 5, 0, 1` (Cache flushing and capacity limit analysis)
 
 ---
 
 ## 📁 Repository Directory Structure
 
 ```text
-coa akash/
+coa_akash/
 ├── .vscode/
 │   └── tasks.json                     # VS Code tasks for automated execution
 ├── docs/
-│   ├── screenshots/
-│   │   ├── architecture.png           # Hardware Tag/Index decoding architecture
+│   ├── screenshots/                   # Freshly generated terminal trace screenshots
+│   │   ├── architecture.png           # Cache configuration & experimental setup
 │   │   ├── shot_build.png             # Simulator initialization & configuration
-│   │   ├── shot_check1.png            # Address decomposition verification
+│   │   ├── shot_check1.png            # Step-by-step analysis of Block 8 arrival
 │   │   ├── shot_direct.png            # Direct-Mapped execution trace
 │   │   ├── shot_setassoc.png          # 2-Way Set-Associative execution trace
 │   │   ├── shot_full.png              # Fully Associative execution trace
 │   │   └── shot_summary.png           # Comparative performance matrix
-│   └── terminal_output.log            # Execution log output
-├── reports/                           # Academic report artifacts
+│   └── terminal_output.log            # Complete simulation log (main + 3 tests)
+├── reports/                           # Academic report artifacts folder
 │   └── .gitkeep
 ├── .gitignore                         # Python and environment ignores
-├── cache_simulator.py                 # Object-oriented simulation engine
-├── CACHE_SIMULATION_REPORT.md         # Detailed technical simulation report
+├── cache_simulator.py                 # Simulation engine with `--all` benchmark support
+├── CACHE_SIMULATION_REPORT.md         # Full report with Block 8 worked example & tests
 └── README.md                          # Repository documentation
 ```
 
@@ -50,13 +53,16 @@ coa akash/
 # Run default sequence [0, 4, 8, 0, 4, 12]:
 python cache_simulator.py
 
+# Run main benchmark + all three additional tests:
+python cache_simulator.py --all
+
 # Run custom sequence:
-python cache_simulator.py "0, 2, 4, 0, 2, 8"
+python cache_simulator.py "2, 6, 10, 14, 2, 6"
 ```
 
 ---
 
-## 📊 Summary of Benchmark Results
+## 📊 Summary of Main Benchmark Results (`0, 4, 8, 0, 4, 12`)
 
 | Mapping Architecture | Hits | Misses | Hit Ratio | Miss Ratio | Cache Occupancy |
 | :--- | :---: | :---: | :---: | :---: | :---: |

@@ -1,272 +1,247 @@
 # Computer Organization and Architecture Simulation Report
-## Cache Memory Mapping & Placement Policy Analysis
+## Cache Memory Mapping & Placement Policy Experiment
+
+**Course Code:** ENCA302 (Computer Organization and Architecture)  
+**Academic Year:** 2025–2026  
+**Institution:** School of Engineering and Technology, K.R. Mangalam University  
 
 ---
 
-### Academic Information
+### Student Details
 - **Student Name:** Akash Sharma
 - **Roll Number:** 2401201108
 - **Program:** BCA (Artificial Intelligence & Data Science) – Section B
-- **Course Code:** ENCA302 (Computer Organization and Architecture)
-- **Academic Session:** 2025–2026
-- **Institution:** School of Engineering and Technology, K.R. Mangalam University
 - **Course Coordinator:** Alina Banerjee
 
 ---
 
 ## 1. Problem Statement
+**Question 2: Cache Mapping Simulation**
 
-### Question 2: Cache Mapping Simulation
-Develop a software simulation to model and contrast memory block mapping across three canonical cache architectures:
-1. **Direct-Mapped Cache** (1-Way Associative)
-2. **K-Way Set-Associative Cache** (2-Way Associative)
-3. **Fully Associative Cache** (N-Way Associative)
+Develop a simulation that compares the mapping of memory blocks using:
+- **Direct-Mapped Cache**
+- **Set-Associative Cache**
+- **Fully Associative Cache**
 
-**System Parameters:**
-- **Cache Capacity:** 4 Cache Lines (numbered $L0, L1, L2, L3$)
-- **Replacement Policy:** Least Recently Used (LRU)
-- **Memory Access Sequence:** `0, 4, 8, 0, 4, 12`
+Use a small cache and a given sequence of memory block requests. For each mapping technique, display the cache location selected for each memory block, whether it was a hit or a miss, and the total number of hits and misses. Compare the results and explain which technique provides better flexibility for the given access sequence.
 
-**Deliverables:**
-- Explicit cache location (Line and Set index) selected for each incoming block request.
-- Hit / Miss evaluation per access cycle.
-- Total count of cache hits and cache misses.
-- Performance metric derivation (Hit Ratio and Miss Ratio).
-- Comparative architectural evaluation demonstrating which mapping technique yields superior flexibility under the benchmark sequence.
+- **Cache Capacity:** 4 cache blocks (lines $L0, L1, L2, L3$)
+- **Memory Block Sequence:** `0, 4, 8, 0, 4, 12`
 
 ---
 
-## 2. Mathematical Cache Addressing Architecture
+## 2. Cache Configuration and Experimental Setup
 
-In modern computer architectures, a main memory block address is partitioned into two functional fields: **Tag** and **Set Index**.
+The purpose of this experiment is to observe how the structural arrangement of cache lines affects memory access and block retention. Although all three simulated cache configurations provide an identical total storage capacity of four cache lines ($L0, L1, L2, L3$), they impose fundamentally different constraints on where an incoming memory block may reside.
 
-$$\text{Block Address} = (\text{Tag} \times \text{Number of Sets}) + \text{Set Index}$$
-
-$$\text{Set Index} = \text{Block Address} \pmod{\text{Number of Sets}}$$
-
-$$\text{Tag} = \lfloor \text{Block Address} / \text{Number of Sets} \rfloor$$
-
-### 2.1 Architectural Classification
+The simulation feeds an identical sequence of memory requests into all three configurations. As blocks are requested, the simulator records:
+1. Which line/set is selected.
+2. Whether the block is already resident (**HIT**) or must be retrieved from main memory (**MISS**).
+3. Which block, if any, must be evicted under the **Least Recently Used (LRU)** policy.
 
 ```
-                  +-----------------------------------+
-                  |        Memory Block Address       |
-                  +-----------------+-----------------+
-                                    |
-                    +---------------+---------------+
-                    |                               |
-                    v                               v
-             [ Tag Field ]                  [ Set Index Field ]
-          Tag = Block // Sets              Index = Block % Sets
-                    |                               |
-                    |                               v
-                    |                      Select Active Set
-                    |                               |
-                    v                               v
-         Parallel Tag Comparator <=======> Set Lines (Ways)
-                    |
-          +---------+---------+
-          |                   |
-          v                   v
-       [ HIT ]             [ MISS ]
-    Access Line     Fetch from RAM, Apply LRU
-```
-
-| Mapping Strategy | Sets ($S$) | Ways per Set ($W$) | Set Index Equation | Tag Equation | Search Complexity |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **Direct-Mapped** | 4 | 1 | $\text{Block} \pmod 4$ | $\lfloor \text{Block} / 4 \rfloor$ | 1 comparator (fixed line) |
-| **2-Way Set-Associative** | 2 | 2 | $\text{Block} \pmod 2$ | $\lfloor \text{Block} / 2 \rfloor$ | 2 comparators per set |
-| **Fully Associative** | 1 | 4 | $0$ (Implied) | $\text{Block}$ | 4 comparators (entire cache) |
-
----
-
-## 3. Detailed Hardware Execution Trace
-
-### Sequence: `[0, 4, 8, 0, 4, 12]`
-
-#### 3.1 Direct-Mapped Architecture (Sets = 4, Ways = 1)
-- **Mapping Rule:** $\text{Set} = \text{Block} \pmod 4$, $\text{Line} = \text{Set}$, $\text{Tag} = \lfloor \text{Block} / 4 \rfloor$
-
-| Cycle | Block | Tag | Set | Target Line | Result | Evicted Block | Final Cache State [L0, L1, L2, L3] |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **1** | `0` | 0 | 0 | **L0** | **MISS** | — | `[0, -, -, -]` |
-| **2** | `4` | 1 | 0 | **L0** | **MISS** | `0` | `[4, -, -, -]` |
-| **3** | `8` | 2 | 0 | **L0** | **MISS** | `4` | `[8, -, -, -]` |
-| **4** | `0` | 0 | 0 | **L0** | **MISS** | `8` | `[0, -, -, -]` |
-| **5** | `4` | 1 | 0 | **L0** | **MISS** | `0` | `[4, -, -, -]` |
-| **6** | `12` | 3 | 0 | **L0** | **MISS** | `4` | `[12, -, -, -]` |
-
-- **Hits:** 0 | **Misses:** 6 | **Hit Rate:** **0.00%** | **Miss Rate:** **100.00%**
-- **Analysis:** Every memory reference possesses an address divisible by 4. As a consequence, all requests map strictly to Line 0. Lines L1, L2, and L3 remain completely unutilized (0% occupancy). Each new block evicts the preceding block, generating pathological **cache thrashing**.
-
----
-
-#### 3.2 2-Way Set-Associative Architecture (Sets = 2, Ways = 2, LRU)
-- **Mapping Rule:** $\text{Set} = \text{Block} \pmod 2$, $\text{Tag} = \lfloor \text{Block} / 2 \rfloor$
-
-| Cycle | Block | Tag | Set | Target Line | Result | Evicted Block | Final Cache State [L0, L1, L2, L3] | LRU Priority (MRU $\rightarrow$ LRU) |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **1** | `0` | 0 | 0 | **L0** | **MISS** | — | `[0, -, -, -]` | `[L0]` |
-| **2** | `4` | 2 | 0 | **L1** | **MISS** | — | `[0, 4, -, -]` | `[L1, L0]` |
-| **3** | `8` | 4 | 0 | **L0** | **MISS** | `0` | `[8, 4, -, -]` | `[L0, L1]` |
-| **4** | `0` | 0 | 0 | **L1** | **MISS** | `4` | `[8, 0, -, -]` | `[L1, L0]` |
-| **5** | `4` | 2 | 0 | **L0** | **MISS** | `8` | `[4, 0, -, -]` | `[L0, L1]` |
-| **6** | `12` | 6 | 0 | **L1** | **MISS** | `0` | `[4, 12, -, -]` | `[L1, L0]` |
-
-- **Hits:** 0 | **Misses:** 6 | **Hit Rate:** **0.00%** | **Miss Rate:** **100.00%**
-- **Analysis:** Because all addresses are even ($x \pmod 2 = 0$), all 6 requests map to Set 0. The working set contains 3 competing blocks (`0, 4, 8`), but Set 0 possesses only 2 physical ways (L0 and L1). The LRU replacement algorithm repeatedly evicts the exact block required in the immediate next cycle. Set 1 (Lines L2 and L3) remains completely idle.
-
----
-
-#### 3.3 Fully Associative Architecture (Sets = 1, Ways = 4, Global LRU)
-- **Mapping Rule:** Placement allowed in any available cache line; Tag = Block Address.
-
-| Cycle | Block | Tag | Set | Target Line | Result | Evicted Block | Final Cache State [L0, L1, L2, L3] | LRU Order (MRU $\rightarrow$ LRU) |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **1** | `0` | 0 | 0 | **L0** | **MISS** | — | `[0, -, -, -]` | `[0]` |
-| **2** | `4` | 4 | 0 | **L1** | **MISS** | — | `[0, 4, -, -]` | `[4, 0]` |
-| **3** | `8` | 8 | 0 | **L2** | **MISS** | — | `[0, 4, 8, -]` | `[8, 4, 0]` |
-| **4** | `0` | 0 | 0 | **L0** | **HIT** | — | `[0, 4, 8, -]` | `[0, 8, 4]` |
-| **5** | `4` | 4 | 0 | **L1** | **HIT** | — | `[0, 4, 8, -]` | `[4, 0, 8]` |
-| **6** | `12` | 12 | 0 | **L3** | **MISS** | — | `[0, 4, 8, 12]` | `[12, 4, 0, 8]` |
-
-- **Hits:** 2 | **Misses:** 4 | **Hit Rate:** **33.33%** | **Miss Rate:** **66.67%**
-- **Analysis:** Without rigid set constraints, the cache utilizes all 4 physical slots. Blocks 0, 4, and 8 remain in the cache simultaneously, allowing subsequent requests to 0 and 4 to register immediate **cache hits**.
-
----
-
-## 4. Quantitative Performance Comparison
-
-| Metric | Direct-Mapped | 2-Way Set-Associative | Fully Associative |
-| :--- | :---: | :---: | :---: |
-| **Total Memory References** | 6 | 6 | 6 |
-| **Cache Hits** | **0** | **0** | **2** |
-| **Cache Misses** | **6** | **6** | **4** |
-| **Hit Ratio** | **0.00%** | **0.00%** | **33.33%** |
-| **Miss Ratio** | **100.00%** | **100.00%** | **66.67%** |
-| **Lines Utilized** | 1 / 4 (25%) | 2 / 4 (50%) | **4 / 4 (100%)** |
-| **Miss Classification** | 1 Cold + 5 Conflict | 2 Cold + 4 Conflict | 4 Cold + 0 Conflict |
-
----
-
-## 5. Architectural Flexibility Analysis
-
-### **Verdict:** Fully Associative mapping provides the highest flexibility.
-
-### Technical Justification:
-1. **Total Immunity to Conflict Misses:**  
-   In both Direct-Mapped and Set-Associative configurations, block placement is bound by modulo arithmetic ($B \pmod S$). When access patterns exhibit a stride that aligns with the set count, multiple distinct blocks map to the same set. Fully Associative eliminates index constraints entirely.
-2. **Complete Storage Capacity Utilization:**  
-   Under Fully Associative mapping, 100% of the cache (4 out of 4 lines) was actively engaged to store data. In contrast, Direct-Mapped suffered from severe underutilization (75% idle capacity).
-3. **Temporal Locality Preservation:**  
-   By maintaining active working set elements across disjoint slots, blocks `0` and `4` were safely preserved, eliminating redundant memory bus transactions on subsequent accesses.
-
----
-
-## 6. Sensitivity Analysis on Alternative Workload
-
-To evaluate behavioral consistency, an alternating test sequence `[0, 2, 4, 0, 2, 8]` was evaluated:
-
-| Workload Sequence | Direct-Mapped | 2-Way Set-Associative | Fully Associative | Architectural Takeaway |
-| :--- | :---: | :---: | :---: | :--- |
-| `0, 4, 8, 0, 4, 12` *(Benchmark)* | 0 Hits (0%) | 0 Hits (0%) | **2 Hits (33.33%)** | Stride-4 pattern exposes thrashing in fixed-set designs. |
-| `0, 2, 4, 0, 2, 8` *(Even Stride)* | 0 Hits (0%) | **2 Hits (33.33%)** | **2 Hits (33.33%)** | 2-Way associative matches Fully Associative when stride is 2. |
-| `0, 1, 2, 3, 0, 1` *(Unit Stride)* | **2 Hits (33.33%)** | **2 Hits (33.33%)** | **2 Hits (33.33%)** | All architectures perform equally under zero-conflict patterns. |
-
----
-
-## 7. Python Implementation (`cache_simulator.py`)
-
-```python
-"""
-Computer Organization and Architecture (ENCA302)
-Student: Akash Sharma | Roll: 2401201108
-Cache Memory Mapping and Replacement Simulator
-"""
-import sys
-from typing import List, Optional, Tuple
-
-class CacheLine:
-    def __init__(self, line_id: int):
-        self.line_id = line_id
-        self.valid = False
-        self.tag = None
-        self.block_id = None
-        self.last_access_cycle = 0
-
-    def update(self, tag: int, block_id: int, cycle: int) -> None:
-        self.valid = True
-        self.tag = tag
-        self.block_id = block_id
-        self.last_access_cycle = cycle
-
-class CacheSet:
-    def __init__(self, set_id: int, ways: int, base_line_id: int):
-        self.set_id = set_id
-        self.ways = ways
-        self.lines = [CacheLine(base_line_id + w) for w in range(ways)]
-
-    def probe(self, tag: int) -> Optional[CacheLine]:
-        for line in self.lines:
-            if line.valid and line.tag == tag:
-                return line
-        return None
-
-    def allocate(self, tag: int, block_id: int, cycle: int) -> Tuple[CacheLine, bool, Optional[int]]:
-        for line in self.lines:
-            if not line.valid:
-                line.update(tag, block_id, cycle)
-                return line, False, None
-        victim_line = min(self.lines, key=lambda l: l.last_access_cycle)
-        evicted_block = victim_line.block_id
-        victim_line.update(tag, block_id, cycle)
-        return victim_line, True, evicted_block
-
-class CacheMemory:
-    def __init__(self, title: str, total_lines: int, ways_per_set: int):
-        self.title = title
-        self.total_lines = total_lines
-        self.ways_per_set = ways_per_set
-        self.num_sets = total_lines // ways_per_set
-        self.sets = [CacheSet(s, ways_per_set, s * ways_per_set) for s in range(self.num_sets)]
-        self.hits = 0
-        self.misses = 0
-        self.current_cycle = 0
-        self.event_log = []
-
-    def access(self, block: int) -> dict:
-        self.current_cycle += 1
-        set_index = block % self.num_sets
-        tag = block // self.num_sets
-        target_set = self.sets[set_index]
-        hit_line = target_set.probe(tag)
-        if hit_line:
-            self.hits += 1
-            hit_line.last_access_cycle = self.current_cycle
-            event = {"cycle": self.current_cycle, "block": block, "tag": tag,
-                     "set": set_index, "line": hit_line.line_id, "status": "HIT", "evicted": None}
-        else:
-            self.misses += 1
-            alloc_line, is_evict, ev_blk = target_set.allocate(tag, block, self.current_cycle)
-            event = {"cycle": self.current_cycle, "block": block, "tag": tag,
-                     "set": set_index, "line": alloc_line.line_id, "status": "MISS", "evicted": ev_blk}
-        flat = [None] * self.total_lines
-        for s in self.sets:
-            for l in s.lines:
-                flat[l.line_id] = l.block_id if l.valid else None
-        event["cache_state"] = flat
-        self.event_log.append(event)
-        return event
+       Processor Request (Block ID)
+                   │
+                   ▼
+    Calculate Set Index: Block mod (Sets)
+                   │
+                   ▼
+    Compare Tags of Valid Lines in Set
+       ├──► Match Found (HIT)  : Update LRU timestamp, access data
+       └──► No Match (MISS)    : Fetch block from RAM
+                                  ├── Empty line available: Load directly
+                                  └── Set full: Evict LRU block, load new block
 ```
 
 ---
 
-## 8. Verification & Execution Instructions
+## 3. Understanding the Three Placement Methods
+
+Each technique partitions the 4 physical cache lines into sets of varying associativity ($Ways$):
+
+| Placement Strategy | Partitioning ($Sets \times Ways$) | Target Location for Block $B$ | Search Scope on Lookup |
+| :--- | :---: | :--- | :---: |
+| **Direct-Mapped** | 4 Sets × 1 Way | Strictly Line $B \pmod 4$ | Exactly 1 line |
+| **2-Way Set-Associative** | 2 Sets × 2 Ways | Either Line of Set $B \pmod 2$ | 2 lines within the set |
+| **Fully Associative** | 1 Set × 4 Ways | Any of the 4 lines ($L0$ to $L3$) | All 4 lines simultaneously |
+
+- **Direct-Mapped:** Each memory block has exactly one dedicated home in cache. While hardware lookup requires only a single comparator, two distinct blocks mapping to the same line cannot coexist.
+- **2-Way Set-Associative:** Divides the cache into two sets (Set 0 = $\{L0, L1\}$, Set 1 = $\{L2, L3\}$). Up to two blocks mapping to the same set can coexist simultaneously.
+- **Fully Associative:** Eliminates set boundaries completely. Any block can be stored in any vacant slot, providing maximum placement freedom.
+
+---
+
+## 4. How a Memory Block Finds Its Cache Location
+
+A requested block address $B$ is decoded into a **Set Index** and a **Tag**:
+
+$$\text{Set Index} = B \pmod{\text{Number of Sets}}$$
+$$\text{Tag} = \lfloor B / \text{Number of Sets} \rfloor$$
+
+For our 4-line cache architectures:
+1. **Direct-Mapped ($S=4$):** $\text{Set Index} = B \pmod 4$, $\text{Tag} = \lfloor B / 4 \rfloor$. Line = Set Index.
+2. **2-Way Set-Associative ($S=2$):** $\text{Set Index} = B \pmod 2$, $\text{Tag} = \lfloor B / 2 \rfloor$. Line = $2 \times \text{Set Index} + \text{Way}$.
+3. **Fully Associative ($S=1$):** $\text{Set Index} = 0$, $\text{Tag} = B$. Line = any available slot.
+
+---
+
+## 5. Step-by-Step Analysis of a Cache Request (Worked Example: Block 8)
+
+To understand how each architecture handles conflicting requests, consider what occurs at **Cycle 3** when **Block 8** arrives.
+
+Prior to Cycle 3, the access sequence has already loaded **Block 0** (Cycle 1) and **Block 4** (Cycle 2):
+
+### Cache State Prior to Cycle 3:
+- **Direct-Mapped:** Block 0 was initially loaded into $L0$. Block 4 then arrived, computed $4 \pmod 4 = 0$, and evicted Block 0 from $L0$. State: `[L0: 4, L1: -, L2: -, L3: -]`.
+- **2-Way Set-Associative:** Block 0 was placed in Set 0, Way 0 ($L0$). Block 4 arrived, computed $4 \pmod 2 = 0$, and occupied Set 0, Way 1 ($L1$). State: `Set 0: [L0: 0, L1: 4]`, with Block 0 as the Least Recently Used block.
+- **Fully Associative:** Block 0 was placed in $L0$, and Block 4 was placed in $L1$. State: `[L0: 0, L1: 4, L2: -, L3: -]`.
+
+### When Block 8 is Requested at Cycle 3:
+1. **Direct-Mapped:**
+   - Calculation: $\text{Line} = 8 \pmod 4 = 0$.
+   - Line $L0$ is currently occupied by Block 4.
+   - Result: **MISS (Conflict)**. Block 4 is evicted, and Block 8 replaces it in $L0$.
+   - State after: `[L0: 8, L1: -, L2: -, L3: -]`.
+2. **2-Way Set-Associative:**
+   - Calculation: $\text{Set} = 8 \pmod 2 = 0$.
+   - Set 0 is examined: it contains Block 0 and Block 4 (neither matches 8).
+   - Result: **MISS (Conflict)**. Because both ways in Set 0 are full, LRU evicts the oldest block (**Block 0**). Block 8 replaces it in $L0$.
+   - State after: `Set 0: [L0: 8, L1: 4]`.
+3. **Fully Associative:**
+   - Calculation: Global search across all lines. Block 8 is not present.
+   - Result: **MISS (Compulsory/Cold)**.
+   - Action: Line $L2$ is currently empty. Block 8 is placed into $L2$ without evicting any existing block!
+   - State after: `[L0: 0, L1: 4, L2: 8, L3: -]`.
+
+---
+
+## 6. Simulation Results
+
+Running the simulator on the required sequence `0, 4, 8, 0, 4, 12` produces the following traces:
+
+### 6.1 Direct-Mapped Trace ($Line = Block \pmod 4$)
+| Step | Block | Tag | Set | Line | Result | Evicted | Cache Lines ($L0, L1, L2, L3$) |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| 1 | 0 | 0 | 0 | L0 | **MISS** | — | `[0, -, -, -]` |
+| 2 | 4 | 1 | 0 | L0 | **MISS** | 0 | `[4, -, -, -]` |
+| 3 | 8 | 2 | 0 | L0 | **MISS** | 4 | `[8, -, -, -]` |
+| 4 | 0 | 0 | 0 | L0 | **MISS** | 8 | `[0, -, -, -]` |
+| 5 | 4 | 1 | 0 | L0 | **MISS** | 0 | `[4, -, -, -]` |
+| 6 | 12 | 3 | 0 | L0 | **MISS** | 4 | `[12, -, -, -]` |
+
+**Performance:** Hits = 0, Misses = 6, Hit Rate = **0.00%**
+
+---
+
+### 6.2 2-Way Set-Associative Trace ($Set = Block \pmod 2$, LRU)
+| Step | Block | Tag | Set | Line | Result | Evicted | Cache Lines ($L0, L1, L2, L3$) |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| 1 | 0 | 0 | 0 | L0 | **MISS** | — | `[0, -, -, -]` |
+| 2 | 4 | 2 | 0 | L1 | **MISS** | — | `[0, 4, -, -]` |
+| 3 | 8 | 4 | 0 | L0 | **MISS** | 0 | `[8, 4, -, -]` |
+| 4 | 0 | 0 | 0 | L1 | **MISS** | 4 | `[8, 0, -, -]` |
+| 5 | 4 | 2 | 0 | L0 | **MISS** | 8 | `[4, 0, -, -]` |
+| 6 | 12 | 6 | 0 | L1 | **MISS** | 0 | `[4, 12, -, -]` |
+
+**Performance:** Hits = 0, Misses = 6, Hit Rate = **0.00%**
+
+---
+
+### 6.3 Fully Associative Trace (Global Search, LRU)
+| Step | Block | Tag | Set | Line | Result | Evicted | Cache Lines ($L0, L1, L2, L3$) |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| 1 | 0 | 0 | 0 | L0 | **MISS** | — | `[0, -, -, -]` |
+| 2 | 4 | 4 | 0 | L1 | **MISS** | — | `[0, 4, -, -]` |
+| 3 | 8 | 8 | 0 | L2 | **MISS** | — | `[0, 4, 8, -]` |
+| 4 | 0 | 0 | 0 | L0 | **HIT** | — | `[0, 4, 8, -]` |
+| 5 | 4 | 4 | 0 | L1 | **HIT** | — | `[0, 4, 8, -]` |
+| 6 | 12 | 12 | 0 | L3 | **MISS** | — | `[0, 4, 8, 12]` |
+
+**Performance:** Hits = 2, Misses = 4, Hit Rate = **33.33%**
+
+---
+
+## 7. Performance Evaluation
+
+### 7.1 Quantitative Comparison Matrix
+
+| Architecture | Hits | Misses | Hit Rate | Miss Rate | Lines Occupied | Space Utilisation |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Direct-Mapped Cache** | 0 | 6 | 0.00% | 100.00% | 1 / 4 | 25.0% |
+| **2-Way Set-Associative Cache** | 0 | 6 | 0.00% | 100.00% | 2 / 4 | 50.0% |
+| **Fully Associative Cache** | **2** | **4** | **33.33%** | **66.67%** | **4 / 4** | **100.0%** |
+
+### 7.2 Hit Rate Visual Comparison
+```text
+Direct-Mapped        [0.00%]  |
+2-Way Set-Assoc      [0.00%]  |
+Fully Associative   [33.33%]  |█████████████████
+```
+
+### 7.3 Detailed Architectural Observations
+1. **Space Utilisation:**
+   - In Direct-Mapped, because all requested blocks are multiples of 4 ($0, 4, 8, 12$), every reference targets Line $L0$. Lines $L1, L2,$ and $L3$ remain completely idle (25% utilisation).
+   - In 2-Way Set-Associative, all blocks are even ($B \pmod 2 = 0$), so they all cluster into Set 0 ($L0, L1$). Set 1 remains unused (50% utilisation).
+   - Fully Associative achieves **100% utilisation**, spreading the four distinct blocks across all 4 available lines.
+2. **Block Reuse (Temporal Locality):**
+   - Direct-Mapped continually evicts the resident block, so when blocks 0 and 4 are accessed a second time, they have already been thrown out.
+   - 2-Way Set-Associative has only 2 lines in Set 0, but the working set has 3 competing blocks ($0, 4, 8$). Under LRU, each new request evicts the exact block needed next.
+   - Fully Associative retains both Block 0 and Block 4, turning their second requests into **clean cache hits**.
+3. **Placement Flexibility:**
+   - Placement freedom directly determines vulnerability to conflict misses. Fully Associative provides complete freedom, eliminating index-based collisions.
+
+---
+
+## 8. Additional Experiments
+
+To verify how the three architectures behave under different access patterns, three independent experiments were conducted:
+
+### Test 1: Repeated Access to Two Blocks (`0, 1, 0, 1, 0, 1`)
+- **Objective:** Evaluate temporal locality when the active working set (2 blocks) fits comfortably within the 4-line cache and has no indexing conflicts.
+- **Results:**
+  - Direct-Mapped: **4 Hits / 2 Misses** (Hit Rate: **66.67%**)
+  - 2-Way Set-Associative: **4 Hits / 2 Misses** (Hit Rate: **66.67%**)
+  - Fully Associative: **4 Hits / 2 Misses** (Hit Rate: **66.67%**)
+- **Insight:** When distinct blocks map to disjoint lines/sets ($0 \pmod 4 = 0$, $1 \pmod 4 = 1$), Direct-Mapped and Set-Associative perform just as efficiently as Fully Associative without requiring complex comparator hardware.
+
+### Test 2: Competing Blocks for Same Set (`2, 6, 10, 14, 2, 6`)
+- **Objective:** Stress-test conflict misses where all blocks share remainder 2 modulo 4 ($2, 6, 10, 14 \equiv 2 \pmod 4$) and remainder 0 modulo 2.
+- **Results:**
+  - Direct-Mapped: **0 Hits / 6 Misses** (Hit Rate: **0.00%** — all fight for Line $L2$)
+  - 2-Way Set-Associative: **0 Hits / 6 Misses** (Hit Rate: **0.00%** — all fight for Set 0)
+  - Fully Associative: **2 Hits / 4 Misses** (Hit Rate: **33.33%** — blocks 2, 6, 10, 14 occupy $L0, L1, L2, L3$, so re-accessing 2 and 6 hits!)
+- **Insight:** Proves that stride-induced conflict misses plague both Direct-Mapped and Set-Associative designs when stride matches the set count.
+
+### Test 3: Cache Flushing & Capacity Limit (`0, 1, 2, 3, 4, 5, 0, 1`)
+- **Objective:** Observe behavior when the working set exceeds the 4-line capacity (6 distinct blocks requested before re-requesting 0 and 1).
+- **Results:**
+  - Direct-Mapped: **0 Hits / 8 Misses** (Hit Rate: **0.00%**)
+  - 2-Way Set-Associative: **0 Hits / 8 Misses** (Hit Rate: **0.00%**)
+  - Fully Associative: **0 Hits / 8 Misses** (Hit Rate: **0.00%**)
+- **Insight:** When the sequence of novel blocks exceeds total cache capacity, LRU evicts earlier blocks across all three architectures, demonstrating the fundamental capacity miss boundary.
+
+---
+
+## 9. Observations, Limitations and Conclusion
+
+### Key Conclusions:
+1. **Best Mapping for the Given Sequence:** **Fully Associative** is unequivocally superior for `0, 4, 8, 0, 4, 12` because it prevents premature evictions and achieves 2 hits, whereas the other two fail with 0 hits.
+2. **Hardware Trade-offs:**
+   - **Direct-Mapped:** Simplest hardware, lowest power, and fastest cycle time, but vulnerable to pathological thrashing on conflicting memory addresses.
+   - **Fully Associative:** Eliminates conflict misses entirely, but requires parallel tag comparators and complex LRU logic, making large caches economically and thermally impractical.
+   - **Set-Associative:** Represents the industry compromise used in modern CPUs (e.g., L1/L2 caches), combining manageable hardware complexity with good conflict reduction.
+
+---
+
+## 10. How to Run the Simulator
 
 ```bash
-# Execute benchmark sequence:
+# Run main sequence [0, 4, 8, 0, 4, 12]:
 python cache_simulator.py
 
-# Execute custom sequence:
-python cache_simulator.py "0, 2, 4, 0, 2, 8"
+# Run main benchmark and all three additional tests:
+python cache_simulator.py --all
+
+# Run any custom block sequence:
+python cache_simulator.py "2, 6, 10, 14, 2, 6"
 ```
