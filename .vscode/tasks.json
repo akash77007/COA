@@ -1,0 +1,34 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run Cache Simulator (Default Sequence)",
+            "type": "shell",
+            "command": "python cache_simulator.py",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Run Cache Simulator (Custom Sequence)",
+            "type": "shell",
+            "command": "python cache_simulator.py 0,2,4,0,2,8",
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Log Terminal Output to Docs",
+            "type": "shell",
+            "command": "python cache_simulator.py > docs/terminal_output.log",
+            "group": "none"
+        }
+    ]
+}
